@@ -1,0 +1,102 @@
+@precedence {
+  unary
+  times @left
+  plus @left
+  shift @left
+  bit @left
+  compare @left
+  logic @left
+  eager @right
+}
+
+@top Program { semis<statement>* }
+
+statement[@isGroup=Statement] {
+  AssignStatement { placeExpression assignOp expression } |
+  InvokeStatement { CallExpression } |
+  DeclareStatement { (kw<"var"> | kw<"globalvar">) commaSep<Identifier> ";" } |
+
+  BlockStatement |
+  IfStatement {
+    kw<"if"> expression kw<"then">? semis<statement> (!eager kw<"else"> semis<statement>)?
+  } |
+  RepeatStatement { kw<"repeat"> expression semis<statement> } |
+  WhileStatement { kw<"while"> expression kw<"do">? semis<statement> } |
+  DoStatement { kw<"do"> semis<statement> !eager kw<"until"> expression } |
+  ForStatement {
+    kw<"for"> "(" semis<statement> expression ";"? semis<statement> ")" semis<statement>
+  } |
+  WithStatement { kw<"with"> expression kw<"do">? semis<statement> } |
+  SwitchStatement { kw<"switch"> expression BlockStatement } |
+
+  JumpStatement { kw<"break"> | kw<"continue"> | kw<"exit"> } |
+  ReturnStatement { kw<"return"> expression } |
+  CaseStatement { (kw<"case"> expression | kw<"default">) ":" }
+}
+
+BlockStatement { ("{" | kw<"begin">) semis<statement>* ("}" | kw<"end">) }
+
+term<expr> {
+  IdentExpression |
+  LiteralExpression |
+  ParenExpression |
+  UnaryExpression |
+  FieldExpression<expr> |
+  IndexExpression<expr>
+}
+placeExpression { term<placeExpression> }
+expression {
+  term<expression> |
+  CallExpression |
+  BinaryExpression
+}
+
+IdentExpression {
+  Identifier |
+  kw<"true"> | kw<"false"> |
+  kw<"self"> | kw<"other"> | kw<"all"> | kw<"noone"> | kw<"global"> | kw<"local">
+}
+LiteralExpression { Real | String }
+ParenExpression { "(" expression ")" }
+UnaryExpression { !unary (Op<"+" | "-"> | Op<"!" | "~"> | kw<"not">) expression }
+FieldExpression<expr> { expr "." Identifier }
+IndexExpression<expr> { (IdentExpression | FieldExpression<expr>) "[" commaSep<expression> "]" }
+CallExpression { IdentExpression !eager "(" commaSep<expression> ")" }
+BinaryExpression {
+  expression !times (Op<"*" | "/"> | kw<"div"> | kw<"mod">) expression |
+  expression !plus Op<"+" | "-"> expression |
+  expression !shift Op<"<<" | ">>"> expression |
+  expression !bit Op<"&" | "^" | "|"> expression |
+  expression !compare (Op<"<" | "<=" | "==" | "!=" | "<>" | ">=" | ">"> | Op<":"? "=">) expression |
+  expression !logic (Op<"&&" | "||" | "^^"> | kw<"and"> | kw<"or"> | kw<"xor">) expression
+}
+
+commaSep<expr> { expr ("," expr)* }
+
+semis<expr> { expr (!eager ";")* }
+
+kw<term> { @specialize[@name={term}]<Identifier, term> }
+
+assignOp { Op<("+" | "-" | "*" | "/" | "&" | "|" | "^") "="> | Op<":"? "="> }
+
+@skip { LineComment | BlockComment | whitespace }
+
+@tokens {
+  whitespace { " " | "\t" | "\r" | "\n" }
+  LineComment { "//" ![\n]* }
+  BlockComment { "/*" blockCommentBody }
+  blockCommentBody { ![*] blockCommentBody | "*" blockCommentStar }
+  blockCommentStar { "/" | "*" blockCommentStar | ![/*] blockCommentBody }
+
+  @precedence { LineComment, BlockComment, Op<"*" | "/"> }
+
+  Identifier { $[a-zA-Z_] $[a-zA-Z0-9_]* }
+  Real { "$" $[0-9a-fA-F]* | $[0-9]+ ("." $[0-9]+)? | "." $[0-9]+ }
+  String { "\"" !["]* "\"" | "'" ![']* "'" }
+
+  Op<expr> { expr }
+
+  "(" ")" "[" "]" "{" "}" "." "," ";" ":"
+
+  @precedence { ".", Real }
+}
