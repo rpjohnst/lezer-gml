@@ -4,4 +4,4 @@ This is a GML grammar for the [lezer](https://lezer.codemirror.net) parser syste
 
 It parses Game Maker 8.0 GML, for the [Dejavu](https://dejavu.abubalay.com) project.
 
-The code is licensed under an MIT license.
+This code is released under an MIT license.

@@ -1,6 +1,6 @@
 {
   "name": "lezer-gml",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "lezer-based GML grammar",
   "author": "Russell Johnston <rpjohnst@gmail.com>",
   "license": "MIT",
@@ -14,9 +14,9 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "lezer": "^0.13.1"
+    "@lezer/lr": "^0.15.5"
   },
   "devDependencies": {
-    "lezer-generator": "^0.13.1"
+    "@lezer/generator": "^0.15.2"
   }
 }
